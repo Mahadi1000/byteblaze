@@ -1,55 +1,101 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router";
-import BlogCard from "../Components/BlogCard";
+import { Link, Outlet, useParams } from "react-router";
+import { handleBlog } from "../utils/api";
+import { MdBookmarkAdd } from "react-icons/md";
+import { saveBlog } from "../utils";
 
 const BlogPage = () => {
-  const [blogs, setBlogs] = useState([]);
-
+  const { id } = useParams();
+  console.log(id);
+  const [blog, setBlog] = useState(null);
+  const [tabIndex, setTabIndex] = useState(0);
   useEffect(() => {
-    const handleBlogs = () => {
-      fetch("https://dev.to/api/articles?per_page=20&top=7")
-        .then((res) => res.json())
-        .then((data) => setBlogs(data));
-
-      console.log(blogs);
+    const fetchBlog = async () => {
+      const data = await handleBlog(id);
+      setBlog(data);
     };
-    handleBlogs();
-  }, [blogs]);
+    fetchBlog();
+  }, [id]);
+  
+  console.log(blog);
+
+  const handleBookmark = (blog) => {
+    saveBlog(blog);
+  };
 
   return (
-    <section className=" text-gray-800">
-      <div className="container max-w-6xl p-6 mx-auto space-y-6 sm:space-y-12">
-        <Link
-          rel="noopener noreferrer"
-          href="#"
-          className="block max-w-sm gap-3 mx-auto sm:max-w-full group hover:no-underline focus:no-underline lg:grid lg:grid-cols-12 bg-gray-50"
-        >
-          <img
-            src={
-              blogs[0]?.cover_image ||
-              "https://source.unsplash.com/random/480x360"
-            }
-            alt=""
-            className="object-cover w-full h-64 rounded sm:h-96 lg:col-span-7 bg-gray-500"
-          />
-          <div className="p-6 space-y-2 lg:col-span-5">
-            <h3 className="text-2xl font-semibold sm:text-4xl group-hover:underline group-focus:underline">
-              {blogs[0]?.title || "No title"}
-            </h3>
-            <span className="text-xs text-gray-600">
-              {new Date(blogs[0]?.published_at).toLocaleDateString() ||
-                "No date"}
-            </span>
-            <p>{blogs[0]?.description || "No description"}</p>
+    <div className="max-w-3xl px-6 py-16 mx-auto space-y-12 overflow-hidden">
+      <article className="space-y-8 ">
+        <div className="space-y-6">
+          <h1 className="text-4xl font-bold md:tracking-tight md:text-5xl">
+            {blog?.title}
+          </h1>
+
+          <div className="flex flex-col items-start justify-between w-full md:flex-row md:items-center ">
+            <p className="text-sm">
+              {blog?.reading_time_minutes} min read •{" "}
+              {new Date(blog?.published_at).toLocaleDateString()}
+            </p>
+            <p className="flex-shrink-0 mt-3 text-sm md:mt-0">
+              {blog?.comments_count} comments • {blog?.public_reactions_count} views
+            </p>
           </div>
-        </Link>
-        <div className="grid justify-center grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {blogs.slice(1).map((blog, index) => (
-            <BlogCard key={index} blog={blog} />
-          ))}
+          <div className="flex items-center overflow-x-auto overflow-y-hidden sm:justify-start flex-nowrap ">
+            <Link
+              to={`/blog/${id}`}
+              onClick={() => setTabIndex(0)}
+              className={`flex cursor-pointer items-center flex-shrink-0 px-5 py-3 space-x-2 ${
+                tabIndex === 0 ? "border border-b-0" : "border-b"
+              }  `}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="w-4 h-4"
+              >
+                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+              </svg>
+              <span>Content</span>
+            </Link>
+            <Link
+              to={`author`}
+              onClick={() => setTabIndex(1)}
+              className={`flex cursor-pointer items-center flex-shrink-0 px-5 py-3 space-x-2 ${
+                tabIndex === 1 ? "border border-b-0" : "border-b"
+              }  `}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="w-4 h-4"
+              >
+                <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+                <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+              </svg>
+              <span>Author</span>
+            </Link>
+            <div
+              className="bg-primary p-3 ml-5 rounded-full hover:bg-opacity-30 bg-opacity-20 cursor-pointer hover:scale-105 overflow-hidden"
+            >
+              <MdBookmarkAdd
+              onClick={()=> handleBookmark(blog)}
+               size={20} className="text-secondary" />
+            </div>
+          </div>
         </div>
-      </div>
-    </section>
+        <Outlet />
+      </article>
+    </div>
   );
 };
 
